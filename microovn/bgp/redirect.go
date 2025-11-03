@@ -6,6 +6,7 @@ import (
 	"crypto/md5"
 	"errors"
 	"fmt"
+	"os"
 	"slices"
 	"strings"
 	"time"
@@ -271,10 +272,45 @@ func createExternalNetworks(ctx context.Context, s state.State, extConnections [
 	return nil
 }
 
+// validateVrfModule checks if the VRF kernel module is loaded.
+// It checks for the module in three ways:
+// 1. Check if /sys/module/vrf exists
+// 2. Check if 'vrf' is listed in /proc/modules
+// Returns an error if the module is not loaded.
+func validateVrfModule() error {
+	// First, try checking /sys/module/vrf as it's the most reliable method
+	if _, err := os.Stat("/sys/module/vrf"); err == nil {
+		return nil
+	}
+
+	// Fallback to checking /proc/modules
+	data, err := os.ReadFile("/proc/modules")
+	if err != nil {
+		return fmt.Errorf("unable to check kernel modules: %w", err)
+	}
+
+	// Check if "vrf" module is present in /proc/modules
+	scanner := bufio.NewScanner(strings.NewReader(string(data)))
+	for scanner.Scan() {
+		line := scanner.Text()
+		// Module lines start with the module name followed by a space
+		if strings.HasPrefix(line, "vrf ") {
+			return nil
+		}
+	}
+
+	return fmt.Errorf("VRF kernel module is not loaded. Please load it with 'modprobe vrf' or ensure it's configured to load at boot")
+}
+
 // createVrf instructs OVN to set up VRF to redistribute NAT and Load Balancer addresses for each Logical Router Port
 // that's associated with external connections defined in "extConnections" argument. Only one VRF is set up with table
 // ID specified by "tableID" argument. All LRPs redistribute their addresses to this VRF.
 func createVrf(ctx context.Context, s state.State, extConnections []types.BgpExternalConnection, tableID string) error {
+	// Validate VRF kernel module is loaded
+	if err := validateVrfModule(); err != nil {
+		return fmt.Errorf("VRF kernel module not available: %w", err)
+	}
+
 	lrName := getLrName(s)
 
 	_, err := ovnCmd.NBCtlCluster(ctx,
