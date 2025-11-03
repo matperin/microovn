@@ -38,6 +38,13 @@ routes to its peers. Conversely, when the BGP daemon learns routes from its
 peers, it inserts them to the VRF, from which they are picked up by the
 ``ovn-controller`` and learned by the OVN.
 
+.. note::
+
+   VRF functionality requires the ``vrf`` kernel module to be loaded. MicroOVN
+   will verify that the module is available before attempting to configure VRF.
+   If the module is not loaded, you will receive an error message indicating
+   that you need to load it with ``modprobe vrf``.
+
 What MicroOVN sets up
 ---------------------
 
@@ -47,6 +54,7 @@ sections. For more information on how to do it, see:
 
 To fully set up BGP redirection, MicroOVN requires following:
 
+* The ``vrf`` kernel module must be loaded on the host
 * one or more physical interfaces that provide connectivity to the external
   networks
 * VRF table ID that the OVN will create and to which the internal routes will

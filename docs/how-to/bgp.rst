@@ -9,6 +9,22 @@ the MicroOVN, for more information about what's happening under the hood, see:
 Enable BGP integration
 ----------------------
 
+Prerequisites
+~~~~~~~~~~~~~
+
+Before enabling BGP integration, ensure that the VRF kernel module is loaded:
+
+.. code-block:: none
+
+   sudo modprobe vrf
+
+To ensure the module is loaded automatically on boot, add it to
+``/etc/modules-load.d/vrf.conf``:
+
+.. code-block:: none
+
+   echo "vrf" | sudo tee /etc/modules-load.d/vrf.conf
+
 In this example, we have a host connected to two external networks via
 interfaces ``eth1`` and ``eth2``.
 
