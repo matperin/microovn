@@ -24,8 +24,10 @@ func TestValidateVrfModule(t *testing.T) {
 		}
 		// Verify error message contains expected content
 		errMsg := err.Error()
-		if errMsg != "VRF kernel module is not loaded. Please load it with 'modprobe vrf' or ensure it's configured to load at boot" &&
-			errMsg[:32] != "unable to check kernel modules: " {
+		expectedMsg1 := "VRF kernel module is not loaded. Please load it with 'modprobe vrf' or ensure it's configured to load at boot"
+		expectedPrefix := "unable to check kernel modules: "
+
+		if errMsg != expectedMsg1 && !strings.HasPrefix(errMsg, expectedPrefix) {
 			t.Errorf("unexpected error message format: %s", errMsg)
 		}
 	}

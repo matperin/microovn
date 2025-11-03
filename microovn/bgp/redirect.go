@@ -273,7 +273,7 @@ func createExternalNetworks(ctx context.Context, s state.State, extConnections [
 }
 
 // validateVrfModule checks if the VRF kernel module is loaded.
-// It checks for the module in three ways:
+// It checks for the module in two ways:
 // 1. Check if /sys/module/vrf exists
 // 2. Check if 'vrf' is listed in /proc/modules
 // Returns an error if the module is not loaded.
