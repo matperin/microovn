@@ -180,27 +180,44 @@ apps:
 
 parts:
   # Dependencies
+  sqlite:
+    source: https://www.sqlite.org/2026/sqlite-autoconf-3510200.tar.gz
+    plugin: autotools
+    autotools-configure-parameters:
+      - --prefix=/
+      - --enable-fts5
+      - --enable-rtree
+      - CFLAGS=-DSQLITE_ENABLE_UNLOCK_NOTIFY
+    build-packages:
+      - gcc
+      - make
+      - tcl
+    prime:
+      - lib/libsqlite3.so*
+
   dqlite:
     source: https://github.com/canonical/dqlite
     source-type: git
     source-depth: 1
     source-tag: v1.18.5
+    after:
+      - sqlite
     plugin: autotools
     autotools-configure-parameters:
       - --prefix=
       - --enable-build-raft
     stage-packages:
       - libuv1
-      - libsqlite3-0
       - liblz4-1
     build-packages:
       - make
       - libuv1-dev
       - liblz4-dev
-      - libsqlite3-dev
       - pkg-config
-    organize:
-      usr/lib/: lib/
+    override-build: |
+      set -ex
+      export PKG_CONFIG_PATH="${CRAFT_STAGE}/lib/pkgconfig:${PKG_CONFIG_PATH}"
+      craftctl default
     prime:
       - lib/libdqlite*so*
       - lib/libraft*so*
@@ -318,6 +335,7 @@ parts:
       fi
 
       # Setup build environment
+      export PKG_CONFIG_PATH="${CRAFT_STAGE}/lib/pkgconfig:${PKG_CONFIG_PATH}"
       export CGO_CFLAGS="-I${CRAFT_STAGE}/include/ -I${CRAFT_STAGE}/usr/local/include/"
       export CGO_LDFLAGS="-L${CRAFT_STAGE}/lib/ -L${CRAFT_STAGE}/usr/local/lib/"
       export CGO_LDFLAGS_ALLOW="(-Wl,-wrap,pthread_create)|(-Wl,-z,now)"
@@ -399,6 +417,7 @@ parts:
       - cargo-1.85
     override-build: |
       set -ex
+      rm -rf .sphinx/venv
       make .sphinx/venv PIPOPTS="-c freeze-constraints.txt" \
           || ( cat .sphinx/venv/pip_install.log && exit 1 )
       make text
